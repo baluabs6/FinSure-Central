@@ -12,7 +12,6 @@ variable "location"  { default = "centralindia" }
 variable "dr_region" { default = "ap-south-1" }
 variable "subscription_id" {}
 
-# Primary: Azure
 resource "azurerm_resource_group" "rg" { name = "${var.prefix}-rg" location = var.location }
 resource "azurerm_container_registry" "acr" {
   name = "${var.prefix}acr" resource_group_name = azurerm_resource_group.rg.name location = var.location sku = "Standard"
@@ -27,6 +26,5 @@ resource "azurerm_role_assignment" "aks_acr" {
   role_definition_name = "AcrPull" scope = azurerm_container_registry.acr.id
 }
 
-# Disaster recovery: AWS (replicated backups; extend with EKS for warm standby)
 resource "aws_s3_bucket" "dr_backups" { bucket = "${var.prefix}-dr-backups" }
 resource "aws_s3_bucket_versioning" "v" { bucket = aws_s3_bucket.dr_backups.id versioning_configuration { status = "Enabled" } }

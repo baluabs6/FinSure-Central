@@ -6,5 +6,5 @@ import org.springframework.stereotype.Component;
 public class ClaimEventListener {
   private static final Logger log = LoggerFactory.getLogger(ClaimEventListener.class);
   @KafkaListener(topics = "claim-events", groupId = "policy-ai")
-  public void onClaimEvent(String event){ log.info("Claim event received: {}", event); /* hook: trigger rejection-reason explainer */ }
+  public void onClaimEvent(String event){ log.info("Claim event received: {}", event); }
 }
