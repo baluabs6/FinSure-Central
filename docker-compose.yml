@@ -1,0 +1,14 @@
+services:
+  kafka:
+    image: apache/kafka:3.8.0
+    ports: ["9092:9092"]
+  claims-service:
+    build: { context: ., dockerfile: claims-service/Dockerfile }
+    environment: { KAFKA_BOOTSTRAP: "kafka:9092" }
+    ports: ["8081:8081"]
+    depends_on: [kafka]
+  policy-ai-service:
+    build: { context: ., dockerfile: policy-ai-service/Dockerfile }
+    environment: { KAFKA_BOOTSTRAP: "kafka:9092", ANTHROPIC_API_KEY: "${ANTHROPIC_API_KEY}" }
+    ports: ["8082:8082"]
+    depends_on: [kafka]
