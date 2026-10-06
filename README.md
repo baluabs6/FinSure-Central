@@ -18,30 +18,50 @@ FinSure Central is a full-stack finance and insurance platform that helps people
 | Testing | Tosca |
 
 ## 3. Application Architecture
-```
-                         +---------------------------+
-                         |   React Frontend (Vite)   |
-                         |  Claim Tracker | Decoder  |
-                         +-------------+-------------+
-                                       | REST
-                  +--------------------+--------------------+
-                  |                                         |
-        +---------v----------+                   +----------v---------+
-        |   claims-service   |                   |  policy-ai-service |
-        |  Spring Boot :8081 |                   |  Spring Boot :8082 |
-        |  Claims REST + JPA |                   |  Spring AI decoder |
-        +----+----------+----+                   +----+----------+----+
-             |          |                             |          |
-             |  publish |                     consume |          | prompt
-             |          |        +-------------+      |          |
-             |          +------->|    Kafka    |------+          |
-             |                   | claim-events|                 |
-        +----v-----+             +-------------+          +------v------+
-        | H2 / DB  |                                      | Claude (LLM)|
-        +----------+                                      +-------------+
+```mermaid
+flowchart TB
+    User([Customer / Browser])
 
-   Deployment:  GitHub Actions -> Docker images -> Azure ACR -> Azure AKS
-   Provisioning: Terraform (Azure primary)     DR: AWS (S3 backups)
+    subgraph AZ["Azure Cloud - Primary"]
+        direction TB
+        subgraph AKS["Azure Kubernetes Service (AKS)"]
+            FE["React Frontend<br/>Claim Tracker + Policy Decoder"]
+            CS["claims-service<br/>Spring Boot :8081<br/>REST + JPA"]
+            PS["policy-ai-service<br/>Spring Boot :8082<br/>Spring AI"]
+            K[("Kafka<br/>topic: claim-events")]
+        end
+        DB[("Database<br/>H2 dev / PostgreSQL prod")]
+        ACR["Azure Container Registry"]
+    end
+
+    LLM["Claude LLM<br/>Anthropic API"]
+
+    subgraph CICD["CI/CD"]
+        GH["GitHub Actions<br/>build, test, docker push, deploy"]
+        TF["Terraform<br/>Infrastructure as Code"]
+        TS["Tosca<br/>API + UI tests"]
+    end
+
+    subgraph AWS["AWS Cloud - Disaster Recovery"]
+        S3[("S3 backups<br/>versioned")]
+    end
+
+    User -->|HTTPS| FE
+    FE -->|"/api/claims"| CS
+    FE -->|"/api/policies/decode"| PS
+    CS --> DB
+    CS -->|publish| K
+    K -->|consume| PS
+    PS -->|prompt| LLM
+    DB -.->|backup| S3
+
+    GH -->|push images| ACR
+    ACR -->|pull| AKS
+    GH -->|kubectl apply| AKS
+    TF -.->|provisions| AZ
+    TF -.->|provisions| AWS
+    TS -.->|tests| FE
+    TS -.->|tests| CS
 ```
 
 ## 4. What This Application Is All About
