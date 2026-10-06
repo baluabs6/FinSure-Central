@@ -67,6 +67,7 @@ flowchart TB
 ## 4. What This Application Is All About
 Insurance and finance products are hard to understand. People often find out about sub-limits, room-rent caps, waiting periods and co-pay clauses only when a claim is rejected, and then they cannot tell why it was rejected or what stage it is at. FinSure Central addresses this in two ways:
 - **Claim tracking:** submit a claim against a policy number, follow it through SUBMITTED, DOCS_VERIFIED, UNDER_REVIEW, APPROVED, REJECTED and PAID, and see the rejection reason when there is one. Every status change is published as an event on Kafka.
+- **Rejection explainer and appeal drafter:** for a rejected claim, the AI explains the rejection reason in plain language and drafts an appeal letter addressed to the insurer's grievance officer.
 - **AI policy decoder:** paste the policy wording and an LLM, guided by a strict system prompt, lists the exclusions, caps, waiting periods, co-pay clauses and claim-rejection risks in plain language, quoting clause numbers when present and saying so when something is not in the text.
 
 ## 5. How This Application Differs from Other Applications
