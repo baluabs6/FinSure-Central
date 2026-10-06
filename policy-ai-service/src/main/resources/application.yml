@@ -9,3 +9,4 @@ spring:
     consumer.key-deserializer: org.apache.kafka.common.serialization.StringDeserializer
     consumer.value-deserializer: org.apache.kafka.common.serialization.StringDeserializer
 management.endpoints.web.exposure.include: health,info
+claims.url: ${CLAIMS_URL:http://localhost:8081}

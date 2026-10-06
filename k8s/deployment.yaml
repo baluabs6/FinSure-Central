@@ -34,6 +34,7 @@ spec:
           ports: [{ containerPort: 8082 }]
           env:
             - { name: KAFKA_BOOTSTRAP, value: kafka:9092 }
+            - { name: CLAIMS_URL, value: "http://claims-service" }
             - name: ANTHROPIC_API_KEY
               valueFrom: { secretKeyRef: { name: anthropic, key: api-key } }
           readinessProbe: { httpGet: { path: /actuator/health, port: 8082 } }

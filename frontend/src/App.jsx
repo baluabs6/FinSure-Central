@@ -41,7 +41,45 @@ function Decoder() {
     <pre style={{ whiteSpace: 'pre-wrap' }}>{out}</pre></section>)
 }
 
+const NUM = new Set(['claimAmount', 'sumInsured', 'policyAgeMonths', 'documentsMissing', 'priorClaimsLast12Months', 'annualIncome', 'dependents', 'loans', 'existingCover'])
+const LIST = new Set(['documents'])
+const TOOLS = [
+  { name: 'Ingest policy for Q&A', fields: [['policyNumber'], ['text', 1]], path: f => `/api/ai/policy/${f.policyNumber}/ingest` },
+  { name: 'Policy Q&A', fields: [['policyNumber'], ['question'], ['language']], path: f => `/api/ai/policy/${f.policyNumber}/ask` },
+  { name: 'Extract document fields', fields: [['documentType'], ['documentText', 1]], path: '/api/ai/extract' },
+  { name: 'Check claim documents', fields: [['claimType'], ['documents', 1], ['language']], path: '/api/ai/check-documents' },
+  { name: 'Compare policies', fields: [['policyA', 1], ['policyB', 1], ['language']], path: '/api/ai/compare' },
+  { name: 'Claim risk and fraud score', fields: [['claimType'], ['claimAmount'], ['sumInsured'], ['policyAgeMonths'], ['documentsMissing'], ['priorClaimsLast12Months']], path: '/api/ai/risk' },
+  { name: 'Coverage gap advisor', fields: [['annualIncome'], ['dependents'], ['loans'], ['city'], ['existingCover'], ['language']], path: '/api/ai/coverage' },
+  { name: 'Scam checker', fields: [['text', 1]], path: '/api/ai/scam-check' },
+  { name: 'Claims copilot', fields: [['message', 1]], path: '/api/ai/copilot' },
+  { name: 'Notifications', fields: [], path: '/api/ai/notifications', get: true },
+  { name: 'AI audit log', fields: [], path: '/api/ai/audit', get: true }
+]
+
+function AiTools() {
+  const [i, setI] = useState(0); const [vals, setVals] = useState({}); const [out, setOut] = useState(''); const [busy, setBusy] = useState(false)
+  const t = TOOLS[i]
+  const run = async () => {
+    setBusy(true); setOut('')
+    try {
+      const body = {}
+      t.fields.forEach(([k]) => { const v = vals[k] ?? ''; body[k] = NUM.has(k) ? Number(v) : LIST.has(k) ? v.split('\n').filter(Boolean) : v })
+      const r = await api(typeof t.path === 'function' ? t.path(vals) : t.path, t.get ? {} : { method: 'POST', body: JSON.stringify(body) })
+      setOut(typeof r === 'string' ? r : JSON.stringify(r, null, 2))
+    } catch (e) { setOut('Error: ' + e.message) }
+    setBusy(false)
+  }
+  return (<section style={box}><h2>AI Tools</h2>
+    <select value={i} onChange={e => { setI(Number(e.target.value)); setVals({}); setOut('') }}>{TOOLS.map((x, n) => <option key={x.name} value={n}>{x.name}</option>)}</select>
+    <div style={{ display: 'grid', gap: 8, margin: '12px 0' }}>{t.fields.map(([k, multi]) => multi
+      ? <textarea key={k} rows={5} placeholder={k} value={vals[k] || ''} onChange={e => setVals({ ...vals, [k]: e.target.value })} />
+      : <input key={k} placeholder={k} value={vals[k] || ''} onChange={e => setVals({ ...vals, [k]: e.target.value })} />)}</div>
+    <button onClick={run} disabled={busy}>{busy ? 'Working…' : 'Run'}</button>
+    <pre style={{ whiteSpace: 'pre-wrap' }}>{out}</pre></section>)
+}
+
 export default function App() {
   return (<main style={{ maxWidth: 800, margin: '0 auto', padding: 24, fontFamily: 'system-ui, sans-serif' }}>
-    <h1>FinSure Central</h1><p>Finance and insurance, in plain language.</p><Claims /><Decoder /></main>)
+    <h1>FinSure Central</h1><p>Finance and insurance, in plain language.</p><Claims /><Decoder /><AiTools /></main>)
 }
